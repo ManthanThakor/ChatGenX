@@ -1,7 +1,7 @@
 const asyncHandler = require("express-async-handler"); // Import asyncHandler
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
-
+const jwt = require("jsonwebtoken");
 //--------- Registration ---------
 
 const register = asyncHandler(async (req, res) => {
@@ -64,20 +64,20 @@ const login = asyncHandler(async (req, res) => {
     res.status(401);
     throw new Error("Invalid email or password");
   }
-  // Generate and send JWT
-  // const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-  //   expiresIn: "1d",
-  // });
-  // res.cookie("token", token, { expiresIn: "1d" });
-  // res.json({
-  //   status: true,
-  //   message: "Login was successful",
-  //   user: {
-  //     id: user._id,
-  //     username: user.username,
-  //     email: user.email,
-  //   },
-  // });
+  //! Generate and send JWT
+
+  const token = jwt.sign({ id: user?._id }, process.env.JWT_SECRET, {
+    expiresIn: "3d",
+  });
+
+  //! set tne token into cookie (http only)
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production", // Cookie will only be sent over HTTPS in production
+    sameSite: "strict",
+    maxAge: 24 * 60 * 60 * 1000, // 1 day
+  });
+
   //send the response
   res.json({
     status: true,
@@ -89,6 +89,12 @@ const login = asyncHandler(async (req, res) => {
 });
 
 //--------- Logout ---------
+
+const logout = asyncHandler((req, res) => {
+  res.cookie("token", "", { maxAge: 1 });
+  res.status(200).json({ message: "Logged out successfully" });
+});
+
 //--------- Profile ---------
 //--------- Check user Auth Status ---------
 
