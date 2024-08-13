@@ -1,19 +1,26 @@
-const asyncHandler = require("express-async-handler"); // Import asyncHandler
+const asyncHandler = require("express-async-handler");
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-//--------- Registration ---------
 
+//--------- Registration ---------
 const register = asyncHandler(async (req, res) => {
   const { username, email, password } = req.body;
 
-  // Validate
+  // Validate input fields
   if (!username || !email || !password) {
     res.status(400);
-    throw new Error("Please all fields are required");
+    throw new Error("All fields are required");
   }
 
-  // Check the email is taken
+  // Validate email format (basic validation)
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    res.status(400);
+    throw new Error("Invalid email format");
+  }
+
+  // Check if the email is already taken
   const userExists = await User.findOne({ email });
   if (userExists) {
     res.status(400);
@@ -31,13 +38,14 @@ const register = asyncHandler(async (req, res) => {
     email,
   });
 
-  // Add the date the trial will end
+  // Add the trial end date
   newUser.trialExpires = new Date(
     new Date().getTime() + newUser.trialPeriod * 24 * 60 * 60 * 1000
   );
 
   // Save the user
   await newUser.save();
+
   res.json({
     status: true,
     message: "Registration was successful",
@@ -49,59 +57,77 @@ const register = asyncHandler(async (req, res) => {
 });
 
 //--------- Login ---------
-
 const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
-  // Validate
+
+  // Validate user exists
   const user = await User.findOne({ email });
   if (!user) {
     res.status(401);
     throw new Error("Invalid email or password");
   }
-  // Check if password is valid
-  const isMatch = await bcrypt.compare(password, user?.password);
+
+  // Check if password matches
+  const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
     res.status(401);
     throw new Error("Invalid email or password");
   }
-  //! Generate and send JWT
 
-  const token = jwt.sign({ id: user?._id }, process.env.JWT_SECRET, {
+  // Generate and send JWT
+  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
     expiresIn: "3d",
   });
 
-  //! set tne token into cookie (http only)
+  // Set the token into an HTTP-only cookie
   res.cookie("token", token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production", // Cookie will only be sent over HTTPS in production
+    secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
-    maxAge: 24 * 60 * 60 * 1000, // 1 day
+    maxAge: 3 * 24 * 60 * 60 * 1000, // 3 days
   });
 
-  //send the response
   res.json({
     status: true,
-    message: "Login success",
-    _id: user?._id,
+    message: "Login successful",
+    _id: user._id,
     username: user.username,
     email: user.email,
   });
 });
 
 //--------- Logout ---------
-
 const logout = asyncHandler((req, res) => {
   res.cookie("token", "", { maxAge: 1 });
   res.status(200).json({ message: "Logged out successfully" });
 });
 
 //--------- Profile ---------
+const UserProfile = asyncHandler(async (req, res) => {
+  if (!req.user) {
+    res.status(401).json({ message: "Not authorized" });
+    return;
+  }
+
+  // Find the user by ID and exclude the password field
+  const user = await User.findById(req.user.id).select("-password");
+  if (!user) {
+    res.status(404).json({ message: "User not found" });
+    return;
+  }
+
+  res.status(200).json({
+    status: "success",
+    user,
+  });
+});
+
 //--------- Check user Auth Status ---------
 
 module.exports = {
   register,
   login,
-  // logout,
-  // userProfile,
+  logout,
+  UserProfile,
   // checkUserAuthStatus,
 };
