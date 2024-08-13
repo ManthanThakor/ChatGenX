@@ -2,6 +2,7 @@ const path = require("path");
 const dotenv = require("dotenv");
 dotenv.config({ path: path.resolve(__dirname, ".env") });
 const express = require("express");
+const cookieParser = require("cookie-parser");
 const { errorHandler } = require("./middlewares/ErrorMiddleware");
 const usersRouter = require("./routes/UserRouter");
 
@@ -15,6 +16,7 @@ const port = process.env.PORT || 8000;
 //! Middleware
 
 app.use(express.json());
+app.use(cookieParser());
 
 //! Routes
 
