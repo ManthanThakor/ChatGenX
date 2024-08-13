@@ -104,13 +104,9 @@ const logout = asyncHandler((req, res) => {
 
 //--------- Profile ---------
 const UserProfile = asyncHandler(async (req, res) => {
-  if (!req.user) {
-    res.status(401).json({ message: "Not authorized" });
-    return;
-  }
-
+  const id = "66b9d76615f80c852fd2dd36";
   // Find the user by ID and exclude the password field
-  const user = await User.findById(req.user.id).select("-password");
+  const user = await User.findById(id).select("-password");
   if (!user) {
     res.status(404).json({ message: "User not found" });
     return;
