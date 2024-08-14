@@ -18,9 +18,9 @@ const openAIController = asyncHandler(async (req, res) => {
       {
         inputs: prompt,
         parameters: {
-          max_length: 50, // Increase length for more detailed responses
-          temperature: 0.7, // Adjust for creativity
-          top_p: 0.9, // Adjust for diversity
+          max_length: 700,
+          temperature: 0.7,
+          top_p: 0.9,
         },
       },
       {

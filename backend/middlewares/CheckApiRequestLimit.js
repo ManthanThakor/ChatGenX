@@ -17,7 +17,7 @@ const checkApiRequestLimit = asyncHandler(async (req, res, next) => {
   }
   //check if the user has exceeded his/her monthly request or not
   if (user?.apiRequestCount >= requestLimit) {
-    throw new Error("API Request limit reached, please subcribe to a plan");
+    throw new Error("API Request limit reached, please subscribe to a plan");
   }
   next();
 });
