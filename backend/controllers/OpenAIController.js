@@ -1,5 +1,7 @@
 const asyncHandler = require("express-async-handler");
 const axios = require("axios");
+const ContentHistory = require("../models/ContentHistory");
+const User = require("../models/User"); // Import the User model
 
 const openAIController = asyncHandler(async (req, res) => {
   const { prompt } = req.body;
@@ -12,11 +14,11 @@ const openAIController = asyncHandler(async (req, res) => {
 
   try {
     const response = await axios.post(
-      "https://api-inference.huggingface.co/models/EleutherAI/gpt-neo-2.7B",
+      "https://api-inference.huggingface.co/models/gpt2",
       {
         inputs: prompt,
         parameters: {
-          max_length: 700,
+          max_length: 30,
         },
       },
       {
@@ -26,18 +28,29 @@ const openAIController = asyncHandler(async (req, res) => {
       }
     );
 
-    // Log the full response for debugging
-    console.log("Hugging Face API Response:", response.data);
-
-    // Adjust content extraction based on actual response
+    // Extract content from the response
     let content = "No content generated.";
-
-    // Check different possible response formats
     if (response.data && response.data.length > 0) {
       content =
         response.data[0]?.generated_text?.trim() ||
         response.data[0]?.text?.trim() ||
         "No content generated.";
+    }
+
+    // Create the history
+    const newContent = await ContentHistory.create({
+      user: req.user._id,
+      content,
+    });
+
+    // Find the user and update their history and API request count
+    const userFound = await User.findById(req.user._id);
+    if (userFound) {
+      userFound.contentHistory.push(newContent._id);
+      userFound.apiRequestCount += 1;
+      await userFound.save();
+    } else {
+      return res.status(404).json({ error: "User not found." });
     }
 
     res.status(200).json({ content });
