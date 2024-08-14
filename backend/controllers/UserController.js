@@ -104,7 +104,7 @@ const logout = asyncHandler((req, res) => {
 
 //--------- Profile ---------
 const UserProfile = asyncHandler(async (req, res) => {
-  const id = "66b9d76615f80c852fd2dd36";
+  const id = req?.user?.id;
   // Find the user by ID and exclude the password field
   const user = await User.findById(id).select("-password");
   if (!user) {
