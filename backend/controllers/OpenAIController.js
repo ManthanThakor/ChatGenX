@@ -1,7 +1,5 @@
 const asyncHandler = require("express-async-handler");
 const axios = require("axios");
-const ContentHistory = require("../models/ContentHistory");
-const User = require("../models/User");
 
 const openAIController = asyncHandler(async (req, res) => {
   const { prompt } = req.body;
@@ -15,7 +13,12 @@ const openAIController = asyncHandler(async (req, res) => {
   try {
     const response = await axios.post(
       "https://api-inference.huggingface.co/models/EleutherAI/gpt-neo-2.7B",
-      { inputs: prompt },
+      {
+        inputs: prompt,
+        parameters: {
+          max_length: 700,
+        },
+      },
       {
         headers: {
           Authorization: `Bearer ${process.env.HUGGING_FACE_API_KEY}`,
@@ -23,18 +26,18 @@ const openAIController = asyncHandler(async (req, res) => {
       }
     );
 
-    const content = response?.data?.generated_text?.trim();
+    // Log the full response for debugging
+    console.log("Hugging Face API Response:", response.data);
 
-    const newContent = await ContentHistory.create({
-      user: req?.user?._id,
-      content,
-    });
+    // Adjust content extraction based on actual response
+    let content = "No content generated.";
 
-    const userFound = await User.findById(req?.user?.id);
-    if (userFound) {
-      userFound.contentHistory.push(newContent?._id);
-      userFound.apiRequestCount += 1;
-      await userFound.save();
+    // Check different possible response formats
+    if (response.data && response.data.length > 0) {
+      content =
+        response.data[0]?.generated_text?.trim() ||
+        response.data[0]?.text?.trim() ||
+        "No content generated.";
     }
 
     res.status(200).json({ content });
@@ -44,9 +47,12 @@ const openAIController = asyncHandler(async (req, res) => {
       error.response?.data || error.message
     );
 
-    res
-      .status(500)
-      .json({ error: "An error occurred while processing your request." });
+    res.status(500).json({
+      error:
+        error.response?.data?.error ||
+        "An error occurred while processing your request.",
+      details: error.response?.data || error.message,
+    });
   }
 });
 
