@@ -6,6 +6,7 @@ const cookieParser = require("cookie-parser");
 const { errorHandler } = require("./middlewares/ErrorMiddleware");
 const usersRouter = require("./routes/UserRouter");
 const OpenAIRouter = require("./routes/OpenAIRouter");
+const stripeRouter = require("./routes/stripeRouter");
 
 //! Connect to MongoDB
 require("./utils/ConnectDB")();
@@ -23,6 +24,7 @@ app.use(cookieParser());
 
 app.use("/api/users", usersRouter);
 app.use("/api/openai", OpenAIRouter);
+app.use("/api/stripe", stripeRouter);
 
 //! Error Handling
 
