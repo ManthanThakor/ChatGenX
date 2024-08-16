@@ -7,7 +7,8 @@ const { errorHandler } = require("./middlewares/ErrorMiddleware");
 const usersRouter = require("./routes/UserRouter");
 const OpenAIRouter = require("./routes/OpenAIRouter");
 const stripeRouter = require("./routes/stripeRouter");
-const corn = require("node-cron");
+const cron = require("node-cron");
+const User = require("./models/User");
 
 //! Connect to MongoDB
 require("./utils/ConnectDB")();
