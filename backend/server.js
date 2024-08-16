@@ -15,8 +15,87 @@ require("./utils/ConnectDB")();
 const app = express();
 const port = process.env.PORT || 8000;
 
-//! Cron for the trial period
-//! Cron Paid Plan
+//Cron for the trial period : run every single
+cron.schedule("0 0 * * * *", async () => {
+  console.log("This task runs every second");
+  try {
+    //get the current date
+    const today = new Date();
+    const updatedUser = await User.updateMany(
+      {
+        trialActive: true,
+        trialExpires: { $lt: today },
+      },
+      {
+        trialActive: false,
+        subscriptionPlan: "Free",
+        monthlyRequestCount: 5,
+      }
+    );
+    console.log(updatedUser);
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+//Cron for the Free plan: run at the end of every month
+cron.schedule("0 0 1 * * *", async () => {
+  try {
+    //get the current date
+    const today = new Date();
+    await User.updateMany(
+      {
+        subscriptionPlan: "Free",
+        nextBillingDate: { $lt: today },
+      },
+      {
+        monthlyRequestCount: 0,
+      }
+    );
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+//Cron for the Basic plan: run at the end of every month
+cron.schedule("0 0 1 * * *", async () => {
+  try {
+    //get the current date
+    const today = new Date();
+    await User.updateMany(
+      {
+        subscriptionPlan: "Basic",
+        nextBillingDate: { $lt: today },
+      },
+      {
+        monthlyRequestCount: 0,
+      }
+    );
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+//Cron for the Premium plan: run at the end of every month
+cron.schedule("0 0 1 * * *", async () => {
+  try {
+    //get the current date
+    const today = new Date();
+    await User.updateMany(
+      {
+        subscriptionPlan: "Premium",
+        nextBillingDate: { $lt: today },
+      },
+      {
+        monthlyRequestCount: 0,
+      }
+    );
+  } catch (error) {
+    console.log(error);
+  }
+});
+//Cron paid plan
+
 //! Middleware
 
 app.use(express.json());
