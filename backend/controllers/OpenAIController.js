@@ -1,7 +1,9 @@
 const asyncHandler = require("express-async-handler");
-const axios = require("axios");
 const ContentHistory = require("../models/ContentHistory");
 const User = require("../models/User"); // Import the User model
+const Groq = require("groq-sdk");
+
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 const openAIController = asyncHandler(async (req, res) => {
   const { prompt } = req.body;
@@ -13,29 +15,23 @@ const openAIController = asyncHandler(async (req, res) => {
   }
 
   try {
-    const response = await axios.post(
-      "https://api-inference.huggingface.co/models/gpt2",
-      {
-        inputs: prompt,
-        parameters: {
-          max_length: 700,
-          temperature: 0.7,
-          top_p: 0.9,
+    // Use Groq SDK to get chat completion
+    const response = await groq.chat.completions.create({
+      messages: [
+        {
+          role: "user",
+          content: prompt,
         },
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.HUGGING_FACE_API_KEY}`,
-        },
-      }
-    );
+      ],
+      model: "llama3-8b-8192",
+      max_length: 700,
+    });
 
     // Extract content from the response
     let content = "No content generated.";
-    if (response.data && response.data.length > 0) {
+    if (response.choices && response.choices.length > 0) {
       content =
-        response.data[0]?.generated_text?.trim() ||
-        response.data[0]?.text?.trim() ||
+        response.choices[0]?.message?.content?.trim() ||
         "No content generated.";
     }
 
@@ -57,16 +53,11 @@ const openAIController = asyncHandler(async (req, res) => {
 
     res.status(200).json({ content });
   } catch (error) {
-    console.error(
-      "Error with Hugging Face API:",
-      error.response?.data || error.message
-    );
+    console.error("Error with Groq API:", error.message);
 
     res.status(500).json({
-      error:
-        error.response?.data?.error ||
-        "An error occurred while processing your request.",
-      details: error.response?.data || error.message,
+      error: "An error occurred while processing your request.",
+      details: error.message,
     });
   }
 });

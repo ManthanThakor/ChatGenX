@@ -1,12 +1,11 @@
 const express = require("express");
 
 const isAuthenticated = require("../middlewares/isAuthenticated");
-
 const {
   handlestripePayment,
   handleFreeSubscription,
   verifyPayment,
-} = require("../controllers/HandleStripePayment");
+} = require("../controllers/handleStripePayment");
 
 const stripeRouter = express.Router();
 
