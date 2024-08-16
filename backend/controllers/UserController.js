@@ -106,7 +106,10 @@ const logout = asyncHandler((req, res) => {
 const UserProfile = asyncHandler(async (req, res) => {
   const id = req?.user?.id;
   // Find the user by ID and exclude the password field
-  const user = await User.findById(id).select("-password");
+  const user = await User.findById(id)
+    .select("-password")
+    .populate("payments")
+    .populate("contentHistory");
   if (!user) {
     res.status(404).json({ message: "User not found" });
     return;
@@ -118,6 +121,19 @@ const UserProfile = asyncHandler(async (req, res) => {
   });
 });
 
+//------Check user Auth Status-----
+const checkAuth = asyncHandler(async (req, res) => {
+  const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+  if (decoded) {
+    res.json({
+      isAuthenticated: true,
+    });
+  } else {
+    res.json({
+      isAuthenticated: false,
+    });
+  }
+});
 //--------- Check user Auth Status ---------
 
 module.exports = {
@@ -125,5 +141,6 @@ module.exports = {
   login,
   logout,
   UserProfile,
+  checkAuth,
   // checkUserAuthStatus,
 };
