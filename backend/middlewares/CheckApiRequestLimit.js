@@ -5,20 +5,24 @@ const checkApiRequestLimit = asyncHandler(async (req, res, next) => {
   if (!req.user) {
     return res.status(401).json({ message: "Not authorized" });
   }
-  //Find the user
+
   const user = await User.findById(req?.user?.id);
   if (!user) {
     return res.status(404).json({ message: "User not found" });
   }
-  let requestLimit = 0;
-  //check if the user is on a trial period
+
+  let requestLimit = user?.defaultRequestLimit || 100; // Set a default limit
   if (user?.trialActive) {
     requestLimit = user?.monthlyRequestCount;
   }
-  //check if the user has exceeded his/her monthly request or not
+
   if (user?.apiRequestCount >= requestLimit) {
-    throw new Error("API Request limit reached, please subscribe to a plan");
+    console.error(`User ${user.id} exceeded the API request limit.`);
+    return res.status(403).json({
+      message: "API Request limit reached, please subscribe to a plan",
+    });
   }
+
   next();
 });
 

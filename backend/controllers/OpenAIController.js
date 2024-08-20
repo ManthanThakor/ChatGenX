@@ -24,7 +24,6 @@ const openAIController = asyncHandler(async (req, res) => {
         },
       ],
       model: "llama3-8b-8192",
-      max_length: 700,
     });
 
     // Extract content from the response

@@ -1,13 +1,20 @@
 import React from "react";
+import { useParams, useSearchParams } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { FaCheckCircle, FaTimesCircle, FaSpinner } from "react-icons/fa";
+import { useQuery } from "@tanstack/react-query";
+import { verifyPaymentAPI } from "../../apis/stripePayment/stripePayment";
 
 const PaymentSuccess = () => {
-  // Static values for demonstration
-  const isLoading = false; // Change to true to simulate loading state
-  const isError = false; // Change to true to simulate error state
-  const paymentIntentID = "example_payment_intent_id"; // Example payment intent ID
+  //get the params
+  const [searchParams] = useSearchParams();
+  const paymentIntentID = searchParams.get("payment_intent");
+  //UseQuery
 
+  const { isLoading, isError, data, isPending, isSuccess } = useQuery({
+    queryFn: () => verifyPaymentAPI(paymentIntentID),
+  });
+  console.log(data);
   return (
     <div className="max-w-lg mx-auto my-10 p-6 bg-white shadow-md rounded-lg">
       {isLoading ? (

@@ -1,28 +1,29 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { checkUserAuthStatusAPI } from "../apis/user/usersAPI";
 import { useQuery } from "@tanstack/react-query";
+import { checkUserAuthStatusAPI } from "../apis/user/usersAPI";
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  //Make request using react query
+
+  // Make request using react query
   const { isError, isLoading, data, isSuccess } = useQuery({
     queryFn: checkUserAuthStatusAPI,
     queryKey: ["checkAuth"],
   });
-  //update the authenticated user
+
+  // Update the authenticated user
   useEffect(() => {
     if (isSuccess) {
-      setIsAuthenticated(data);
+      setIsAuthenticated(data?.isAuthenticated || false);
     }
   }, [data, isSuccess]);
 
-  //Update the user auth after login
   const login = () => {
     setIsAuthenticated(true);
   };
-  //Update the user auth after login
+
   const logout = () => {
     setIsAuthenticated(false);
   };
@@ -36,7 +37,7 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-//Custom hook
+// Custom hook to use AuthContext
 export const useAuth = () => {
   return useContext(AuthContext);
 };

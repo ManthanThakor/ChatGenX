@@ -3,7 +3,7 @@ import axios from "axios";
 
 export const generateContentAPI = async (userPrompt) => {
   const response = await axios.post(
-    "http://localhost:8000/api/v1/openai/generate-content",
+    "http://localhost:8000/api/openai/generate-content",
     {
       prompt: userPrompt,
     },

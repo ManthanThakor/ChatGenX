@@ -9,6 +9,7 @@ const OpenAIRouter = require("./routes/OpenAIRouter");
 const stripeRouter = require("./routes/stripeRouter");
 const cron = require("node-cron");
 const User = require("./models/User");
+const cors = require("cors"); // Import the CORS module
 
 //! Connect to MongoDB
 require("./utils/ConnectDB")();
@@ -97,10 +98,14 @@ cron.schedule("0 0 1 * * *", async () => {
 });
 //Cron paid plan
 
-//! Middleware
-
-app.use(express.json());
+//----middlewares----
+app.use(express.json()); //pass incoming json data
 app.use(cookieParser());
+const corsOptions = {
+  origin: "http://localhost:5173",
+  credentials: true,
+};
+app.use(cors(corsOptions));
 
 //! Routes
 

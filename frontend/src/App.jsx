@@ -4,9 +4,23 @@ import "./App.css";
 import Home from "./components/Home/Home";
 import AboutUs from "./components/About/AboutUs";
 import Registration from "./components/Users/Register";
+import AppFeatures from "./components/Features/Features";
+import PaymentSuccess from "./components/StripePayment/PaymentSuccess";
+import CheckoutForm from "./components/StripePayment/CheckoutForm";
+import AuthRoute from "./components/AuthRoute/AuthRoute";
+import ContentGenerationHistory from "./components/ContentGeneration/ContentHistory";
+import BlogPostAIAssistant from "./components/ContentGeneration/ContentGenerationHistory";
+import Dashboard from "./components/Users/UserDashboard";
+import Login from "./components/Users/Login";
+import PublicNavbar from "./components/Navbar/PublicNavbar";
+import PrivateNavbar from "./components/Navbar/PrivateNavbar";
+import { useAuth } from "./AuthContext/AuthContext";
+import FreePlanSignup from "./components/StripePayment/FreePlanSignup";
+import Plans from "./components/Plans/Plan";
 
 function App() {
   const [count, setCount] = useState(0);
+  const { isAuthenticated } = useAuth();
 
   return (
     <>
