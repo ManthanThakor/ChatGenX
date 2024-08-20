@@ -2,14 +2,14 @@ import React, { useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { Link } from "react-router-dom";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { getUserProfileAPI } from "../../apis/user/usersAPI";
 import StatusMessage from "../Alert/StatusMessage";
 import { generateContentAPI } from "../../apis/chatGPT/chatGPT";
-
+import { useQuery } from "@tanstack/react-query";
 const BlogPostAIAssistant = () => {
   const [generatedContent, setGeneratedContent] = useState("");
-  const [history, setHistory] = useState([]);
+  const queryClient = useQueryClient();
 
   // Get the user profile
   const { isLoading, isError, data, error } = useQuery({
@@ -21,11 +21,27 @@ const BlogPostAIAssistant = () => {
   const mutation = useMutation({
     mutationFn: generateContentAPI,
     onSuccess: (response) => {
+      const newContent = {
+        prompt: formik.values.prompt,
+        content: response.generatedText,
+        createdAt: new Date().toISOString(),
+      };
+
+      // Update content history on the server
+      queryClient.setQueryData(["profile"], (oldData) => {
+        return {
+          ...oldData,
+          user: {
+            ...oldData.user,
+            contentHistory: [
+              ...(oldData?.user?.contentHistory || []),
+              newContent,
+            ],
+          },
+        };
+      });
+
       setGeneratedContent(response.generatedText);
-      setHistory((prevHistory) => [
-        ...prevHistory,
-        { prompt: formik.values.prompt, response: response.generatedText },
-      ]);
     },
     onError: (error) => {
       console.error("Error generating content:", error.message);

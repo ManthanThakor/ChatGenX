@@ -37,6 +37,7 @@ const openAIController = asyncHandler(async (req, res) => {
     // Create the history
     const newContent = await ContentHistory.create({
       user: req.user._id,
+      prompt, // Save the prompt
       content,
     });
 
