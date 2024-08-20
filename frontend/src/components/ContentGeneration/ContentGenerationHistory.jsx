@@ -9,6 +9,7 @@ import { generateContentAPI } from "../../apis/chatGPT/chatGPT";
 
 const BlogPostAIAssistant = () => {
   const [generatedContent, setGeneratedContent] = useState("");
+  const [history, setHistory] = useState([]);
 
   // Get the user profile
   const { isLoading, isError, data, error } = useQuery({
@@ -17,7 +18,19 @@ const BlogPostAIAssistant = () => {
   });
 
   // Mutation for generating content
-  const mutation = useMutation({ mutationFn: generateContentAPI });
+  const mutation = useMutation({
+    mutationFn: generateContentAPI,
+    onSuccess: (response) => {
+      setGeneratedContent(response.generatedText);
+      setHistory((prevHistory) => [
+        ...prevHistory,
+        { prompt: formik.values.prompt, response: response.generatedText },
+      ]);
+    },
+    onError: (error) => {
+      console.error("Error generating content:", error.message);
+    },
+  });
 
   // Formik setup for handling form data
   const formik = useFormik({
@@ -32,10 +45,11 @@ const BlogPostAIAssistant = () => {
       category: Yup.string().required("Selecting a category is required"),
     }),
     onSubmit: (values) => {
-      mutation.mutate(
-        `Generate a blog post based ${values.prompt}, ${values.category}, ${values.tone}`
-      );
-      setGeneratedContent(`Generated content for prompt: ${mutation.data}`);
+      mutation.mutate({
+        prompt: values.prompt,
+        category: values.category,
+        tone: values.tone,
+      });
     },
   });
 
@@ -58,31 +72,27 @@ const BlogPostAIAssistant = () => {
           AI Blog Post Generator
         </h2>
 
-        {/* Loading */}
-        {mutation?.isLoading && (
+        {mutation.isLoading && (
           <StatusMessage
             type="loading"
             message="Generating content, please wait..."
           />
         )}
 
-        {/* Success */}
-        {mutation?.isSuccess && (
+        {mutation.isSuccess && (
           <StatusMessage
             type="success"
             message="Content generation is successful!"
           />
         )}
 
-        {/* Error */}
-        {mutation?.isError && (
+        {mutation.isError && (
           <StatusMessage
             type="error"
-            message={mutation?.error?.response?.data?.message}
+            message={mutation.error?.message || "An error occurred"}
           />
         )}
 
-        {/* Static display for Plan and Credits */}
         <div className="flex mt-3">
           <div className="mr-2 mb-2">
             <span className="text-sm font-semibold bg-green-200 px-4 py-2 rounded-full">
@@ -97,9 +107,7 @@ const BlogPostAIAssistant = () => {
           </div>
         </div>
 
-        {/* Form for generating content */}
         <form onSubmit={formik.handleSubmit} className="space-y-4">
-          {/* Prompt input field */}
           <div>
             <label
               htmlFor="prompt"
@@ -119,7 +127,6 @@ const BlogPostAIAssistant = () => {
             )}
           </div>
 
-          {/* Tone selection field */}
           <div>
             <label
               htmlFor="tone"
@@ -142,7 +149,6 @@ const BlogPostAIAssistant = () => {
             )}
           </div>
 
-          {/* Category selection field */}
           <div>
             <label
               htmlFor="category"
@@ -165,25 +171,22 @@ const BlogPostAIAssistant = () => {
             )}
           </div>
 
-          {/* Submit button */}
           <button
             type="submit"
             className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-purple-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
             Generate Content
           </button>
-          {/* Link to view history */}
           <Link to="/history">View history</Link>
         </form>
 
-        {/* Display generated content */}
         {generatedContent && (
           <div className="mt-6 p-4 bg-gray-100 rounded-md">
             <h3 className="text-lg font-semibold text-gray-800 mb-2">
               Generated Content:
             </h3>
             <p className="text-gray-600">
-              {mutation.data?.generatedText || "No content generated."}
+              {generatedContent || "No content generated."}
             </p>
           </div>
         )}

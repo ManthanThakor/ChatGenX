@@ -7,7 +7,10 @@ import { Link } from "react-router-dom";
 
 const ContentGenerationHistory = () => {
   const [modalOpen, setModalOpen] = useState(false);
-  const [selectedContent, setSelectedContent] = useState("");
+  const [selectedContent, setSelectedContent] = useState({
+    prompt: "",
+    answer: "",
+  });
   const modalRef = useRef(null);
 
   // Get the user profile
@@ -15,18 +18,6 @@ const ContentGenerationHistory = () => {
     queryFn: getUserProfileAPI,
     queryKey: ["profile"],
   });
-
-  // Display loading
-  if (isLoading) {
-    return <StatusMessage type="loading" message="Loading please wait" />;
-  }
-
-  // Display error
-  if (isError) {
-    return (
-      <StatusMessage type="error" message={error?.response?.data?.message} />
-    );
-  }
 
   // Open modal with selected content
   const handleViewContent = (content) => {
@@ -37,7 +28,7 @@ const ContentGenerationHistory = () => {
   // Close modal
   const handleCloseModal = () => {
     setModalOpen(false);
-    setSelectedContent("");
+    setSelectedContent({ prompt: "", answer: "" });
   };
 
   // Close modal when clicking outside
@@ -56,6 +47,23 @@ const ContentGenerationHistory = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [modalOpen]);
 
+  // Display loading
+  if (isLoading) {
+    return <StatusMessage type="loading" message="Loading please wait" />;
+  }
+
+  // Display error
+  if (isError || !data?.user) {
+    return (
+      <StatusMessage
+        type="error"
+        message={error?.response?.data?.message || "Failed to load user data"}
+      />
+    );
+  }
+
+  const contentHistory = data?.user?.contentHistory || [];
+
   return (
     <div className="bg-gray-100 py-12">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -73,22 +81,18 @@ const ContentGenerationHistory = () => {
 
         {/* Content history list */}
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
-          {data?.user?.contentHistory?.length === 0 ? (
+          {contentHistory.length === 0 ? (
             <h1 className="text-center p-4">No history found</h1>
           ) : (
             <ul className="divide-y divide-gray-200">
-              {data?.user?.contentHistory?.map((content, index) => (
+              {contentHistory.map((content, index) => (
                 <li
                   key={content.id || index}
                   className="px-6 py-4 flex items-center justify-between space-x-4"
                 >
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 truncate">
-                      {content?.content
-                        ? typeof content?.content === "string"
-                          ? content.content
-                          : JSON.stringify(content.content)
-                        : "No content available"}
+                      {content?.prompt || "No prompt available"}
                     </p>
                     <p className="text-sm text-gray-500">
                       {new Date(content?.createdAt).toLocaleString()}
@@ -97,7 +101,12 @@ const ContentGenerationHistory = () => {
                   <div className="flex items-center space-x-4">
                     <FaEye
                       className="text-gray-500 hover:text-gray-700 cursor-pointer"
-                      onClick={() => handleViewContent(content?.content)}
+                      onClick={() =>
+                        handleViewContent({
+                          prompt: content?.prompt || "No prompt available",
+                          answer: content?.content || "No content available",
+                        })
+                      }
                     />
                     <FaRegEdit className="text-blue-500 hover:text-blue-700 cursor-pointer" />
                     <FaTrashAlt className="text-red-500 hover:text-red-700 cursor-pointer" />
@@ -118,8 +127,13 @@ const ContentGenerationHistory = () => {
           >
             <h3 className="text-lg font-semibold mb-4">Content Details</h3>
             <div className="overflow-y-auto max-h-64">
+              <h4 className="text-gray-400 mb-2">Prompt:</h4>
+              <p className="text-gray-300 whitespace-pre-wrap mb-4">
+                {selectedContent.prompt}
+              </p>
+              <h4 className="text-gray-400 mb-2">Answer:</h4>
               <p className="text-gray-300 whitespace-pre-wrap">
-                {selectedContent}
+                {selectedContent.answer}
               </p>
             </div>
             <button
