@@ -1,8 +1,11 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { Link, useNavigate } from "react-router-dom";
-// import StatusMessage from "../Alert/StatusMessage";
+import { useMutation } from "@tanstack/react-query";
+import { registerAPI } from "../../apis/user/usersAPI";
+import StatusMessage from "../Alert/StatusMessage";
+import { useAuth } from "../../AuthContext/AuthContext";
 
 // Validation schema
 const validationSchema = Yup.object({
@@ -14,8 +17,17 @@ const validationSchema = Yup.object({
 });
 
 const Registration = () => {
+  //custom auth hook
+  const { isAuthenticated, login } = useAuth();
   const navigate = useNavigate();
-
+  //Redirect if a user is login
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/dashboard");
+    }
+  }, [isAuthenticated]);
+  //mutation
+  const mutation = useMutation({ mutationFn: registerAPI });
   // Formik setup for form handling
   const formik = useFormik({
     initialValues: {
@@ -27,11 +39,18 @@ const Registration = () => {
     onSubmit: (values) => {
       // Here, handle the form submission
       console.log("Form values", values);
-      // Simulate successful registration
-      navigate("/login"); // Redirect user to login page
+      mutation.mutate(values); // Redirect user to login page
+
+      setTimeout(() => {
+        navigate("/login");
+      }, 5000);
     },
   });
-
+  console.log(mutation.isSuccess);
+  console.log(mutation.isPending);
+  console.log(mutation.isError);
+  console.log(mutation.error);
+  console.log(mutation);
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-900">
       <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8 m-4">
@@ -42,7 +61,21 @@ const Registration = () => {
           Create an account to get free access for 3 days. No credit card
           required.
         </p>
-
+        {/* display loading */}
+        {mutation.isPending && (
+          <StatusMessage type="loading" message="Loading..." />
+        )}
+        {/* display error */}
+        {mutation.isError && (
+          <StatusMessage
+            type="error"
+            message={mutation?.error?.response?.data?.message}
+          />
+        )}
+        {/* display success */}
+        {mutation.isSuccess && (
+          <StatusMessage type="success" message="Registration success" />
+        )}
         <form onSubmit={formik.handleSubmit} className="space-y-6">
           {/* Username input field */}
           <div>
@@ -57,7 +90,7 @@ const Registration = () => {
               id="username"
               {...formik.getFieldProps("username")}
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm shadow-sm placeholder-gray-400 focus:outline-none focus:border-indigo-500"
-              placeholder="John Doe"
+              placeholder="MANTHAN"
             />
             {formik.touched.username && formik.errors.username && (
               <div className="text-red-500 mt-1">{formik.errors.username}</div>

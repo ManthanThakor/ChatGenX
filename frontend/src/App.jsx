@@ -9,14 +9,61 @@ function App() {
   const [count, setCount] = useState(0);
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/about" element={<AboutUs />} />
-        <Route path="/register" element={<Registration />} />
-        <Route path="*" element={() => <h1>Page not found</h1>} />
-      </Routes>
-    </BrowserRouter>
+    <>
+      <BrowserRouter>
+        {/* Navbar */}
+        {isAuthenticated ? <PrivateNavbar /> : <PublicNavbar />}
+        <Routes>
+          <Route path="/register" element={<Registration />} />
+          <Route path="/login" element={<Login />} />
+          <Route
+            path="/dashboard"
+            element={
+              <AuthRoute>
+                <Dashboard />
+              </AuthRoute>
+            }
+          />
+          <Route
+            path="/generate-content"
+            element={
+              <AuthRoute>
+                <BlogPostAIAssistant />
+              </AuthRoute>
+            }
+          />
+          <Route
+            path="/history"
+            element={
+              <AuthRoute>
+                <ContentGenerationHistory />
+              </AuthRoute>
+            }
+          />
+          <Route path="/" element={<Home />} />
+          <Route path="/plans" element={<Plans />} />
+          <Route
+            path="/free-plan"
+            element={
+              <AuthRoute>
+                <FreePlanSignup />
+              </AuthRoute>
+            }
+          />
+          <Route
+            path="/checkout/:plan"
+            element={
+              <AuthRoute>
+                <CheckoutForm />
+              </AuthRoute>
+            }
+          />
+          <Route path="/success" element={<PaymentSuccess />} />
+          <Route path="/features" element={<AppFeatures />} />
+          <Route path="/about" element={<AboutUs />} />
+        </Routes>
+      </BrowserRouter>
+    </>
   );
 }
 

@@ -1,8 +1,11 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { Link, useNavigate } from "react-router-dom";
 import StatusMessage from "../Alert/StatusMessage";
+import { useMutation } from "@tanstack/react-query";
+import { loginAPI } from "../../apis/user/usersAPI";
+import { useAuth } from "../../AuthContext/AuthContext";
 
 // Validation schema using Yup
 const validationSchema = Yup.object({
@@ -13,8 +16,18 @@ const validationSchema = Yup.object({
 });
 
 const Login = () => {
-  const navigate = useNavigate();
+  //custom auth hook
+  const { isAuthenticated, login } = useAuth();
 
+  const navigate = useNavigate();
+  //Redirect if a user is login
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/dashboard");
+    }
+  }, [isAuthenticated]);
+  //mutation
+  const mutation = useMutation({ mutationFn: loginAPI });
   // Formik setup for form handling
   const formik = useFormik({
     initialValues: {
@@ -24,19 +37,42 @@ const Login = () => {
     validationSchema: validationSchema,
     onSubmit: (values) => {
       // Here, you would typically handle form submission
-      console.log(values);
+
+      mutation.mutate(values);
+
       // Simulate login success and navigate to dashboard
-      navigate("/dashboard");
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 5000);
     },
   });
-
+  //Update is authenticated
+  useEffect(() => {
+    if (mutation.isSuccess) {
+      login();
+    }
+  }, [mutation.isSuccess]);
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center">
       <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8 m-4">
         <h2 className="text-2xl font-bold text-center text-gray-800 mb-8">
           Login to Your Account
         </h2>
-
+        {/* display loading */}
+        {mutation.isPending && (
+          <StatusMessage type="loading" message="Loading..." />
+        )}
+        {/* display error */}
+        {mutation.isError && (
+          <StatusMessage
+            type="error"
+            message={mutation?.error?.response?.data?.message}
+          />
+        )}
+        {/* display success */}
+        {mutation.isSuccess && (
+          <StatusMessage type="success" message="Login success" />
+        )}
         {/* Form for login */}
         <form onSubmit={formik.handleSubmit} className="space-y-6">
           {/* Email input field */}

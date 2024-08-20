@@ -1,7 +1,7 @@
-import ai from "../../assets/ai.png";
-import { Link } from "react-router-dom";
 import HomeFeatures from "./HomeFeatures";
 import FreeTrial from "./FreeTrial";
+import ai from "../../assets/ai.png";
+import { Link } from "react-router-dom";
 export default function Home() {
   return (
     <>
@@ -28,7 +28,7 @@ export default function Home() {
           <div className="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
             <div className="hidden sm:mb-8 sm:flex sm:justify-center">
               <div className="relative rounded-full px-3 py-1 text-sm leading-6 text-gray-400 ring-1 ring-white/10 hover:ring-white/20">
-                Announcing ChatGenX AI Content Generator full release{" "}
+                Announcing Masync AI Content Generator full release{" "}
                 <a href="#" className="font-semibold text-white">
                   <span className="absolute inset-0" aria-hidden="true" />
                   Read more <span aria-hidden="true">&rarr;</span>
@@ -37,10 +37,10 @@ export default function Home() {
             </div>
             <div className="text-center">
               <h1 className="text-4xl font-bold tracking-tight text-white sm:text-6xl">
-                ChatGenX AI Content Generator
+                Masync AI Content Generator
               </h1>
               <p className="mt-6 text-lg leading-8 text-gray-300">
-                ChatGenX is a content generator that uses AI to generate content
+                Masync is a content generator that uses AI to generate content
                 for you. It is a tool that helps you generate content for your
                 blog, website, or social media.
               </p>
@@ -74,7 +74,9 @@ export default function Home() {
           </div>
         </div>
       </div>
+      {/* Homepage features */}
       <HomeFeatures />
+      {/* Homepage CTA */}
       <FreeTrial />
     </>
   );

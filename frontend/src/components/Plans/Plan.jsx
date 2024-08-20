@@ -1,4 +1,6 @@
 import { CheckIcon } from "@heroicons/react/20/solid";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 const tiers = [
   {
     name: "Free",
@@ -19,7 +21,7 @@ const tiers = [
     amount: 20,
     description: "A plan that scales with your rapidly growing business.",
     features: [
-      "25 Credits",
+      "50 Credits",
       "5 Users",
       "Priority Support",
       "Content generation history",
@@ -34,12 +36,10 @@ const tiers = [
     amount: 50,
     description: "Dedicated support and infrastructure for your company.",
     features: [
-      "Unlimited products",
-      "Unlimited subscribers",
-      "Advanced analytics",
-      "1-hour, dedicated support response time",
-      "Marketing automations",
-      "Custom reporting tools",
+      "100 Credits",
+      "10 Users",
+      "Priority Support",
+      "Content generation history",
     ],
     mostPopular: false,
   },
@@ -50,6 +50,20 @@ function classNames(...classes) {
 }
 
 export default function Plans() {
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  const navigate = useNavigate();
+
+  const handleSlect = (plan) => {
+    setSelectedPlan(plan);
+    console.log(selectedPlan);
+    if (plan?.id === "Free") {
+      navigate("/free-plan");
+    } else {
+      //make the actual for payment
+      navigate(`/checkout/${plan?.id}?amount=${plan?.amount}`);
+    }
+  };
+
   return (
     <div className="bg-gray-900 py-24 sm:py-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -76,7 +90,7 @@ export default function Plans() {
                 "rounded-3xl p-8 xl:p-10"
                 //  selected plan
               )}
-              // handleClick=
+              onClick={() => handleSlect(tier)}
             >
               <div className="flex items-center justify-between gap-x-4">
                 <h3
