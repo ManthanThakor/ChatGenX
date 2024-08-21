@@ -7,48 +7,60 @@ import { getUserProfileAPI } from "../../apis/user/usersAPI";
 import StatusMessage from "../Alert/StatusMessage";
 import { generateContentAPI } from "../../apis/chatGPT/chatGPT";
 import { useQuery } from "@tanstack/react-query";
+import ChatWindow from "./ChatWindow";
+
 const BlogPostAIAssistant = () => {
-  const [generatedContent, setGeneratedContent] = useState("");
+  const [contentHistory, setContentHistory] = useState([]);
+  const [displayedText, setDisplayedText] = useState("");
   const queryClient = useQueryClient();
 
-  // Get the user profile
   const { isLoading, isError, data, error } = useQuery({
     queryFn: getUserProfileAPI,
     queryKey: ["profile"],
   });
 
-  // Mutation for generating content
   const mutation = useMutation({
     mutationFn: generateContentAPI,
     onSuccess: (response) => {
-      const newContent = {
-        prompt: formik.values.prompt,
-        content: response.generatedText,
-        createdAt: new Date().toISOString(),
-      };
+      console.log("Full API Response:", response); // Log the entire response
 
-      // Update content history on the server
-      queryClient.setQueryData(["profile"], (oldData) => {
-        return {
-          ...oldData,
-          user: {
-            ...oldData.user,
-            contentHistory: [
-              ...(oldData?.user?.contentHistory || []),
-              newContent,
-            ],
-          },
+      // Updated to use 'content' from the response
+      if (
+        response &&
+        response.content &&
+        typeof response.content === "string"
+      ) {
+        const newContent = {
+          prompt: formik.values.prompt,
+          content: response.content, // Use 'content' here
+          createdAt: new Date().toISOString(),
         };
-      });
 
-      setGeneratedContent(response.generatedText);
+        queryClient.setQueryData(["profile"], (oldData) => {
+          return {
+            ...oldData,
+            user: {
+              ...oldData.user,
+              contentHistory: [
+                ...(oldData?.user?.contentHistory || []),
+                newContent,
+              ],
+            },
+          };
+        });
+
+        setContentHistory([...contentHistory, newContent]);
+        displayTextWordByWord(response.content); // Use 'content' here
+      } else {
+        console.error("Generated content is undefined or not a string.");
+        console.log("Received data structure:", response); // Log the problematic data
+      }
     },
     onError: (error) => {
       console.error("Error generating content:", error.message);
     },
   });
 
-  // Formik setup for handling form data
   const formik = useFormik({
     initialValues: {
       prompt: "",
@@ -69,13 +81,36 @@ const BlogPostAIAssistant = () => {
     },
   });
 
-  // Display loading
+  const displayTextWordByWord = (text) => {
+    if (!text || typeof text !== "string") {
+      console.error("Text is either undefined or not a string.");
+      return;
+    }
+
+    const words = text.split(" ");
+    let index = 0;
+    setDisplayedText("");
+
+    const interval = setInterval(() => {
+      setDisplayedText((prev) => prev + words[index] + " ");
+      index++;
+      if (index >= words.length) {
+        clearInterval(interval);
+      }
+    }, 200); // Adjust speed by changing the interval time (200ms in this case)
+  };
+
+  const handleNewChat = () => {
+    setDisplayedText("");
+    formik.resetForm();
+  };
+
   if (isLoading) {
     return <StatusMessage type="loading" message="Loading please wait..." />;
   }
 
-  // Display error
   if (isError) {
+    console.error("Error loading profile:", error?.response?.data?.message);
     return (
       <StatusMessage type="error" message={error?.response?.data?.message} />
     );
@@ -87,6 +122,8 @@ const BlogPostAIAssistant = () => {
         <h2 className="text-3xl font-extrabold text-gray-800 mb-6 text-center">
           AI Blog Post Generator
         </h2>
+
+        <ChatWindow contentHistory={contentHistory} />
 
         {mutation.isLoading && (
           <StatusMessage
@@ -109,21 +146,14 @@ const BlogPostAIAssistant = () => {
           />
         )}
 
-        <div className="flex mt-3">
-          <div className="mr-2 mb-2">
-            <span className="text-sm font-semibold bg-green-200 px-4 py-2 rounded-full">
-              Plan: {data?.user?.subscriptionPlan}
-            </span>
-          </div>
-          <div className="mr-2 mb-2">
-            <span className="text-sm font-semibold bg-green-200 px-4 py-2 rounded-full">
-              Credit: {data?.user?.apiRequestCount} /{" "}
-              {data?.user?.monthlyRequestCount}
-            </span>
-          </div>
+        <div
+          className="bg-indigo-500 text-white p-3 rounded-lg max-w-xl self-end mt-2 overflow-auto"
+          style={{ maxHeight: "200px", maxWidth: "100%" }}
+        >
+          <p>{displayedText}</p>
         </div>
 
-        <form onSubmit={formik.handleSubmit} className="space-y-4">
+        <form onSubmit={formik.handleSubmit} className="space-y-4 mt-6">
           <div>
             <label
               htmlFor="prompt"
@@ -193,19 +223,15 @@ const BlogPostAIAssistant = () => {
           >
             Generate Content
           </button>
+          <button
+            type="button"
+            onClick={handleNewChat}
+            className="w-full py-2 px-4 mt-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-700 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+          >
+            New Chat
+          </button>
           <Link to="/history">View history</Link>
         </form>
-
-        {generatedContent && (
-          <div className="mt-6 p-4 bg-gray-100 rounded-md">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">
-              Generated Content:
-            </h3>
-            <p className="text-gray-600">
-              {generatedContent || "No content generated."}
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );
