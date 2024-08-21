@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { Link } from "react-router-dom";
@@ -12,6 +12,7 @@ import ChatWindow from "./ChatWindow";
 const BlogPostAIAssistant = () => {
   const [contentHistory, setContentHistory] = useState([]);
   const [displayedText, setDisplayedText] = useState("");
+  const [textToDisplay, setTextToDisplay] = useState("");
   const queryClient = useQueryClient();
 
   const { isLoading, isError, data, error } = useQuery({
@@ -22,9 +23,6 @@ const BlogPostAIAssistant = () => {
   const mutation = useMutation({
     mutationFn: generateContentAPI,
     onSuccess: (response) => {
-      console.log("Full API Response:", response); // Log the entire response
-
-      // Updated to use 'content' from the response
       if (
         response &&
         response.content &&
@@ -50,7 +48,7 @@ const BlogPostAIAssistant = () => {
         });
 
         setContentHistory([...contentHistory, newContent]);
-        displayTextWordByWord(response.content); // Use 'content' here
+        setTextToDisplay(response.content); // Set text to be displayed word by word
       } else {
         console.error("Generated content is undefined or not a string.");
         console.log("Received data structure:", response); // Log the problematic data
@@ -81,6 +79,12 @@ const BlogPostAIAssistant = () => {
     },
   });
 
+  useEffect(() => {
+    if (textToDisplay) {
+      displayTextWordByWord(textToDisplay);
+    }
+  }, [textToDisplay]);
+
   const displayTextWordByWord = (text) => {
     if (!text || typeof text !== "string") {
       console.error("Text is either undefined or not a string.");
@@ -89,19 +93,20 @@ const BlogPostAIAssistant = () => {
 
     const words = text.split(" ");
     let index = 0;
-    setDisplayedText("");
+    let displayed = "";
 
     const interval = setInterval(() => {
-      setDisplayedText((prev) => prev + words[index] + " ");
+      setDisplayedText((prev) => prev + (index > 0 ? " " : "") + words[index]);
       index++;
       if (index >= words.length) {
         clearInterval(interval);
       }
-    }, 200); // Adjust speed by changing the interval time (200ms in this case)
+    }, 100); // Adjust speed by changing the interval time (100ms in this case)
   };
 
   const handleNewChat = () => {
     setDisplayedText("");
+    setTextToDisplay("");
     formik.resetForm();
   };
 
