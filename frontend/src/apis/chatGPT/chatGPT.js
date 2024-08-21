@@ -14,11 +14,35 @@ export const generateContentAPI = async ({ prompt, category, tone }) => {
     );
     return response.data;
   } catch (error) {
-    // Customize error handling as needed
     if (error.response) {
       throw new Error(error.response.data.message || "An error occurred");
     } else {
       throw new Error("An error occurred");
+    }
+  }
+};
+
+//=======Delete Content History API=====
+
+export const deleteContentHistoryAPI = async (contentId) => {
+  if (!contentId) {
+    throw new Error("Content ID is required.");
+  }
+  try {
+    const response = await axios.delete(
+      `http://localhost:8000/api/openai/content-history/${contentId}`, // Ensure this matches the backend route
+
+      { withCredentials: true }
+    );
+    return response.data;
+  } catch (error) {
+    if (error.response) {
+      throw new Error(
+        error.response.data.message ||
+          "An error occurred while deleting the content."
+      );
+    } else {
+      throw new Error("An error occurred while deleting the content.");
     }
   }
 };

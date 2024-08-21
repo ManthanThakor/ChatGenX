@@ -62,6 +62,30 @@ const openAIController = asyncHandler(async (req, res) => {
   }
 });
 
+const deleteContentHistory = async (req, res) => {
+  const contentId = req.params.id;
+
+  try {
+    console.log(`Attempting to delete content with ID: ${contentId}`);
+
+    const result = await ContentHistory.findByIdAndDelete(contentId);
+
+    if (!result) {
+      console.log(`No content found with ID: ${contentId}`);
+      return res.status(404).json({ message: "Content not found" });
+    }
+
+    console.log(`Content deleted successfully with ID: ${contentId}`);
+    res.status(200).json({ message: "Content deleted successfully" });
+  } catch (error) {
+    console.error(`Error occurred while deleting content: ${error.message}`);
+    res
+      .status(500)
+      .json({ message: "An error occurred while deleting the content" });
+  }
+};
+
 module.exports = {
   openAIController,
+  deleteContentHistory,
 };

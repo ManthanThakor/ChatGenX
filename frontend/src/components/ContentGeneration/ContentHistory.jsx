@@ -1,40 +1,66 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   FaRegEdit,
-  FaTrashAlt,
   FaEye,
   FaPlusSquare,
   FaRegCopy,
+  FaTrashAlt,
 } from "react-icons/fa";
 import { IoIosCloseCircle } from "react-icons/io";
 import { getUserProfileAPI } from "../../apis/user/usersAPI";
 import StatusMessage from "../Alert/StatusMessage";
 import { Link } from "react-router-dom";
+import { deleteContentHistoryAPI } from "../../apis/chatGPT/chatGPT";
 
 const ContentGenerationHistory = () => {
   const [modalOpen, setModalOpen] = useState(false);
+  const [warningModalOpen, setWarningModalOpen] = useState(false);
   const [selectedContent, setSelectedContent] = useState({
     prompt: "",
     content: "",
+    _id: "", // Added to manage content ID for deletion
   });
   const modalRef = useRef(null);
+  const queryClient = useQueryClient();
 
+  // Get the user profile
   const { isLoading, isError, data, error } = useQuery({
     queryFn: getUserProfileAPI,
     queryKey: ["profile"],
   });
 
+  // Open modal with selected content
   const handleViewContent = (content) => {
     setSelectedContent(content);
     setModalOpen(true);
   };
 
-  const handleCloseModal = () => {
-    setModalOpen(false);
-    setSelectedContent({ prompt: "", content: "" });
+  // Open warning modal
+  const handleOpenWarningModal = (content) => {
+    setSelectedContent(content);
+    setWarningModalOpen(true);
   };
 
+  // Close modals
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setWarningModalOpen(false);
+    setSelectedContent({ prompt: "", content: "", _id: "" });
+  };
+
+  // Handle content deletion
+  const handleDeleteContent = async () => {
+    try {
+      await deleteContentHistoryAPI(selectedContent._id);
+      queryClient.invalidateQueries("profile"); // Refetch content history after deletion
+      handleCloseModal(); // Close the warning modal after successful deletion
+    } catch (error) {
+      console.error("Failed to delete content:", error.message);
+    }
+  };
+
+  // Close modal when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (modalRef.current && !modalRef.current.contains(event.target)) {
@@ -47,11 +73,6 @@ const ContentGenerationHistory = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
-
-  const handleCopyContent = () => {
-    navigator.clipboard.writeText(selectedContent.content);
-    alert("Content copied to clipboard!");
-  };
 
   if (isLoading) {
     return <StatusMessage type="loading" message="Loading please wait..." />;
@@ -72,7 +93,7 @@ const ContentGenerationHistory = () => {
 
         <div className="flex justify-between mb-4">
           <Link
-            to="/blog-assistant"
+            to="/generate-content"
             className="inline-flex items-center px-3 py-2 bg-gradient-to-r from-purple-500 to-blue-500 text-white text-sm font-semibold rounded-md hover:bg-gradient-to-r hover:from-indigo-600 hover:to-blue-600 focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
             <FaPlusSquare className="mr-2" />
@@ -109,7 +130,10 @@ const ContentGenerationHistory = () => {
                   <button className="text-gray-500 hover:text-gray-700">
                     <FaRegEdit />
                   </button>
-                  <button className="text-red-500 hover:text-red-700">
+                  <button
+                    onClick={() => handleOpenWarningModal(content)}
+                    className="text-red-500 hover:text-red-700"
+                  >
                     <FaTrashAlt />
                   </button>
                 </div>
@@ -118,6 +142,7 @@ const ContentGenerationHistory = () => {
           </ul>
         )}
 
+        {/* Content Modal */}
         {modalOpen && (
           <div
             className="fixed z-10 inset-0 overflow-y-auto"
@@ -127,7 +152,7 @@ const ContentGenerationHistory = () => {
           >
             <div className="flex items-end justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
               <div
-                className="fixed inset-0 bg-black bg-opacity-75 transition-opacity"
+                className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
                 aria-hidden="true"
               ></div>
               <span
@@ -138,50 +163,114 @@ const ContentGenerationHistory = () => {
               </span>
               <div
                 ref={modalRef}
-                className="inline-block align-bottom bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
+                className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
               >
-                <div className="bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                  <div className="sm:flex sm:items-start">
-                    <div className="sm:flex sm:justify-between sm:w-full">
-                      <h3
-                        className="text-lg leading-6 font-medium text-white"
-                        id="modal-title"
+                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                  <div className="sm:flex sm:items-start sm:justify-between">
+                    <h3
+                      className="text-lg leading-6 font-medium text-gray-900"
+                      id="modal-title"
+                    >
+                      Prompt and Content
+                    </h3>
+                    <div className="flex space-x-2">
+                      <button
+                        className="text-gray-500 hover:text-gray-700"
+                        onClick={() => {
+                          navigator.clipboard.writeText(
+                            `${selectedContent.prompt}\n\n${selectedContent.content}`
+                          );
+                        }}
                       >
-                        Prompt and Content
-                      </h3>
-                      <div className="flex space-x-2">
-                        <button
-                          type="button"
-                          className="inline-flex items-center justify-center rounded-md border border-gray-500 shadow-sm px-3 py-2 bg-gray-600 text-base font-medium text-gray-300 hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm"
-                          onClick={handleCopyContent}
-                        >
-                          <FaRegCopy className="mr-1" />
-                          Copy
-                        </button>
-                        <button
-                          type="button"
-                          className="inline-flex items-center justify-center rounded-md border border-gray-500 shadow-sm px-3 py-2 bg-gray-600 text-base font-medium text-gray-300 hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm"
-                          onClick={handleCloseModal}
-                        >
-                          <IoIosCloseCircle className="text-xl" />
-                        </button>
-                      </div>
+                        <FaRegCopy />
+                      </button>
+                      <button
+                        className="text-red-500 hover:text-gray-700"
+                        onClick={handleCloseModal}
+                      >
+                        <IoIosCloseCircle />
+                      </button>
                     </div>
                   </div>
-                  <div className="mt-4">
-                    <p className="text-sm text-gray-300">
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-500">
                       <strong>Prompt:</strong>
                     </p>
-                    <pre className="bg-gray-700 p-4 rounded-md border border-gray-600 text-sm text-gray-200 whitespace-pre-wrap">
+                    <pre className="bg-gray-100 p-4 rounded-md border border-gray-200 text-sm text-gray-700 whitespace-pre-wrap">
                       {selectedContent.prompt}
                     </pre>
-                    <p className="text-sm text-gray-300 mt-4">
+                    <p className="text-sm text-gray-500 mt-4">
                       <strong>Content:</strong>
                     </p>
-                    <pre className="bg-gray-700 p-4 rounded-md border border-gray-600 text-sm text-gray-200 whitespace-pre-wrap">
+                    <pre className="bg-gray-100 p-4 rounded-md border border-gray-200 text-sm text-gray-700 whitespace-pre-wrap">
                       {selectedContent.content}
                     </pre>
                   </div>
+                </div>
+                <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                  <button
+                    type="button"
+                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                    onClick={handleCloseModal}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Warning Modal */}
+        {warningModalOpen && (
+          <div
+            className="fixed z-10 inset-0 overflow-y-auto"
+            aria-labelledby="warning-modal-title"
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+              <div
+                className="fixed inset-0 bg-gray-900 bg-opacity-80 transition-opacity"
+                aria-hidden="true"
+              ></div>
+              <span
+                className="hidden sm:inline-block sm:align-middle sm:h-screen"
+                aria-hidden="true"
+              >
+                &#8203;
+              </span>
+              <div className="inline-block align-bottom bg-gray-700 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-sm sm:w-full">
+                <div className="bg-gray-700 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                  <div className="sm:flex sm:items-start sm:justify-between">
+                    <h3
+                      className="text-lg leading-6 font-medium text-white"
+                      id="warning-modal-title"
+                    >
+                      Delete chat?
+                    </h3>
+                  </div>
+                  <div className="mt-2">
+                    <p className="text-sm text-white">
+                      This will delete "{selectedContent.prompt}"
+                    </p>
+                  </div>
+                </div>
+                <div className="bg-gray-600 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                  <button
+                    type="button"
+                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-black hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                    onClick={handleDeleteContent}
+                  >
+                    Delete
+                  </button>
+                  <button
+                    type="button"
+                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-black hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                    onClick={handleCloseModal}
+                  >
+                    Cancel
+                  </button>
                 </div>
               </div>
             </div>
