@@ -30,7 +30,7 @@ const BlogPostAIAssistant = () => {
       ) {
         const newContent = {
           prompt: formik.values.prompt,
-          content: response.content, // Use 'content' here
+          content: response.content,
           createdAt: new Date().toISOString(),
         };
 
@@ -48,10 +48,10 @@ const BlogPostAIAssistant = () => {
         });
 
         setContentHistory([...contentHistory, newContent]);
-        setTextToDisplay(response.content); // Set text to be displayed word by word
+        setTextToDisplay(response.content);
       } else {
         console.error("Generated content is undefined or not a string.");
-        console.log("Received data structure:", response); // Log the problematic data
+        console.log("Received data structure:", response);
       }
     },
     onError: (error) => {
@@ -93,7 +93,6 @@ const BlogPostAIAssistant = () => {
 
     const words = text.split(" ");
     let index = 0;
-    let displayed = "";
 
     const interval = setInterval(() => {
       setDisplayedText((prev) => prev + (index > 0 ? " " : "") + words[index]);
@@ -101,7 +100,7 @@ const BlogPostAIAssistant = () => {
       if (index >= words.length) {
         clearInterval(interval);
       }
-    }, 100); // Adjust speed by changing the interval time (100ms in this case)
+    }, 100);
   };
 
   const handleNewChat = () => {
@@ -122,9 +121,9 @@ const BlogPostAIAssistant = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-900 flex justify-center items-center p-6">
-      <div className="bg-white rounded-xl shadow-xl overflow-hidden max-w-2xl w-full p-6">
-        <h2 className="text-3xl font-extrabold text-gray-800 mb-6 text-center">
+    <div className="min-h-screen bg-gray-900 flex justify-center items-center p-8">
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full p-8">
+        <h2 className="text-4xl font-bold text-gray-800 mb-8 text-center">
           AI Blog Post Generator
         </h2>
 
@@ -152,17 +151,17 @@ const BlogPostAIAssistant = () => {
         )}
 
         <div
-          className="bg-indigo-500 text-white p-3 rounded-lg max-w-xl self-end mt-2 overflow-auto"
-          style={{ maxHeight: "200px", maxWidth: "100%" }}
+          className="bg-indigo-700 text-white p-4 rounded-lg mt-6 shadow-md"
+          style={{ maxHeight: "300px", overflowY: "auto" }}
         >
           <p>{displayedText}</p>
         </div>
 
-        <form onSubmit={formik.handleSubmit} className="space-y-4 mt-6">
+        <form onSubmit={formik.handleSubmit} className="space-y-6 mt-8">
           <div>
             <label
               htmlFor="prompt"
-              className="block text-gray-700 text-sm font-semibold mb-2"
+              className="block text-gray-700 text-lg font-semibold mb-2"
             >
               Enter a topic or idea
             </label>
@@ -170,7 +169,7 @@ const BlogPostAIAssistant = () => {
               id="prompt"
               type="text"
               {...formik.getFieldProps("prompt")}
-              className="px-4 py-2 w-full border rounded-md focus:ring-2 focus:ring-indigo-500"
+              className="px-4 py-3 w-full border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
               placeholder="Enter a topic or idea"
             />
             {formik.touched.prompt && formik.errors.prompt && (
@@ -181,14 +180,14 @@ const BlogPostAIAssistant = () => {
           <div>
             <label
               htmlFor="tone"
-              className="block text-gray-700 text-sm font-semibold mb-2"
+              className="block text-gray-700 text-lg font-semibold mb-2"
             >
               Select Tone
             </label>
             <select
               id="tone"
               {...formik.getFieldProps("tone")}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option value="">Choose a tone...</option>
               <option value="formal">Formal</option>
@@ -203,14 +202,14 @@ const BlogPostAIAssistant = () => {
           <div>
             <label
               htmlFor="category"
-              className="block text-gray-700 text-sm font-semibold mb-2"
+              className="block text-gray-700 text-lg font-semibold mb-2"
             >
               Select Category
             </label>
             <select
               id="category"
               {...formik.getFieldProps("category")}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option value="">Choose a category...</option>
               <option value="technology">Technology</option>
@@ -224,18 +223,23 @@ const BlogPostAIAssistant = () => {
 
           <button
             type="submit"
-            className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-purple-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            className="w-full py-3 px-6 border border-transparent rounded-md shadow-md text-lg font-semibold text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform"
           >
             Generate Content
           </button>
           <button
             type="button"
             onClick={handleNewChat}
-            className="w-full py-2 px-4 mt-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-700 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+            className="w-full py-3 px-6 mt-4 border border-transparent rounded-md shadow-md text-lg font-semibold text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-600 transition-transform"
           >
             New Chat
           </button>
-          <Link to="/history">View history</Link>
+          <Link
+            to="/history"
+            className="block text-center text-indigo-600 hover:underline mt-4"
+          >
+            View history
+          </Link>
         </form>
       </div>
     </div>
