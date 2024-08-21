@@ -1,6 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { FaRegEdit, FaTrashAlt, FaEye, FaPlusSquare } from "react-icons/fa";
+import {
+  FaRegEdit,
+  FaTrashAlt,
+  FaEye,
+  FaPlusSquare,
+  FaRegCopy,
+} from "react-icons/fa";
+import { IoIosCloseCircle } from "react-icons/io";
 import { getUserProfileAPI } from "../../apis/user/usersAPI";
 import StatusMessage from "../Alert/StatusMessage";
 import { Link } from "react-router-dom";
@@ -9,32 +16,25 @@ const ContentGenerationHistory = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedContent, setSelectedContent] = useState({
     prompt: "",
-    content: "", // Changed from `answer` to `content`
+    content: "",
   });
   const modalRef = useRef(null);
 
-  // Get the user profile
   const { isLoading, isError, data, error } = useQuery({
     queryFn: getUserProfileAPI,
     queryKey: ["profile"],
   });
 
-  // Log the retrieved content history
-  console.log("Content History Data:", data?.user?.contentHistory);
-
-  // Open modal with selected content
   const handleViewContent = (content) => {
     setSelectedContent(content);
     setModalOpen(true);
   };
 
-  // Close modal
   const handleCloseModal = () => {
     setModalOpen(false);
-    setSelectedContent({ prompt: "", content: "" }); // Changed from `answer` to `content`
+    setSelectedContent({ prompt: "", content: "" });
   };
 
-  // Close modal when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (modalRef.current && !modalRef.current.contains(event.target)) {
@@ -47,6 +47,11 @@ const ContentGenerationHistory = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  const handleCopyContent = () => {
+    navigator.clipboard.writeText(selectedContent.content);
+    alert("Content copied to clipboard!");
+  };
 
   if (isLoading) {
     return <StatusMessage type="loading" message="Loading please wait..." />;
@@ -87,8 +92,6 @@ const ContentGenerationHistory = () => {
                 className="flex justify-between items-center py-4"
               >
                 <div>
-                  {/* Log each content item */}
-                  {console.log("Content Item:", content)}
                   <p className="text-gray-800 font-semibold">
                     {content.prompt || "No prompt available"}
                   </p>
@@ -122,9 +125,9 @@ const ContentGenerationHistory = () => {
             role="dialog"
             aria-modal="true"
           >
-            <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div className="flex items-end justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
               <div
-                className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+                className="fixed inset-0 bg-black bg-opacity-75 transition-opacity"
                 aria-hidden="true"
               ></div>
               <span
@@ -135,36 +138,50 @@ const ContentGenerationHistory = () => {
               </span>
               <div
                 ref={modalRef}
-                className="inline-block align-bottom bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full animate-fade-in"
+                className="inline-block align-bottom bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
               >
                 <div className="bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                   <div className="sm:flex sm:items-start">
-                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                    <div className="sm:flex sm:justify-between sm:w-full">
                       <h3
                         className="text-lg leading-6 font-medium text-white"
                         id="modal-title"
                       >
-                        Content Details
+                        Prompt and Content
                       </h3>
-                      <div className="mt-2">
-                        <p className="text-sm text-gray-300">
-                          <strong>Prompt:</strong> {selectedContent.prompt}
-                        </p>
-                        <p className="text-sm text-blue-300">
-                          <strong>Content:</strong> {selectedContent.content}
-                        </p>
+                      <div className="flex space-x-2">
+                        <button
+                          type="button"
+                          className="inline-flex items-center justify-center rounded-md border border-gray-500 shadow-sm px-3 py-2 bg-gray-600 text-base font-medium text-gray-300 hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm"
+                          onClick={handleCopyContent}
+                        >
+                          <FaRegCopy className="mr-1" />
+                          Copy
+                        </button>
+                        <button
+                          type="button"
+                          className="inline-flex items-center justify-center rounded-md border border-gray-500 shadow-sm px-3 py-2 bg-gray-600 text-base font-medium text-gray-300 hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm"
+                          onClick={handleCloseModal}
+                        >
+                          <IoIosCloseCircle className="text-xl" />
+                        </button>
                       </div>
                     </div>
                   </div>
-                </div>
-                <div className="bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                  <button
-                    type="button"
-                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-                    onClick={handleCloseModal}
-                  >
-                    Close
-                  </button>
+                  <div className="mt-4">
+                    <p className="text-sm text-gray-300">
+                      <strong>Prompt:</strong>
+                    </p>
+                    <pre className="bg-gray-700 p-4 rounded-md border border-gray-600 text-sm text-gray-200 whitespace-pre-wrap">
+                      {selectedContent.prompt}
+                    </pre>
+                    <p className="text-sm text-gray-300 mt-4">
+                      <strong>Content:</strong>
+                    </p>
+                    <pre className="bg-gray-700 p-4 rounded-md border border-gray-600 text-sm text-gray-200 whitespace-pre-wrap">
+                      {selectedContent.content}
+                    </pre>
+                  </div>
                 </div>
               </div>
             </div>
