@@ -127,9 +127,7 @@ const ContentGenerationHistory = () => {
                   >
                     <FaEye />
                   </button>
-                  <button className="text-gray-500 hover:text-gray-700">
-                    <FaRegEdit />
-                  </button>
+
                   <button
                     onClick={() => handleOpenWarningModal(content)}
                     className="text-red-500 hover:text-red-700"
