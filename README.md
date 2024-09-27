@@ -1,1 +1,1 @@
-# ChatGenX
+# ChatGenX.
